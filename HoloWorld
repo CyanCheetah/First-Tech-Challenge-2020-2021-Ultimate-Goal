@@ -1,0 +1,185 @@
+private static double SIDEWAYS_DRIFT_CORRECTION = 1.125;
+    private int x = 1;
+    private int I = 0;
+    private boolean aPressed = false;
+    private boolean bPressed = false;
+    
+    
+    @Override
+    public void runOpMode() {
+        
+        PowerLevel powerLevel = PowerLevel.HALF.QUARTER;     //Starts the robot wheels at MAX power level
+        
+        frontl= hardwareMap.get(DcMotor.class, "frontl");
+        frontr= hardwareMap.get(DcMotor.class, "frontr");
+        bottoml= hardwareMap.get(DcMotor.class, "bottoml");
+        bottomr= hardwareMap.get(DcMotor.class, "bottomr");
+        shooter= hardwareMap.get(DcMotor.class, "shooter");
+      
+        frontl.setDirection(DcMotor.Direction.FORWARD);
+        frontr.setDirection(DcMotor.Direction.REVERSE);
+        bottoml.setDirection(DcMotor.Direction.FORWARD);
+        bottomr.setDirection(DcMotor.Direction.REVERSE);
+        shooter.setDirection(DcMotor.Direction.REVERSE);
+        
+        
+        //pickupServo.setDirection(CRServo.Direction.FORWARD);
+        //pickupServoTwo.setDirection(CRServo.Direction.REVERSE);
+        
+         //Brake immedietly after joystick hits 0 instead of coasting down
+        frontl.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        frontr.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        bottoml.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        bottomr.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        shooter.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        
+        //---
+        
+        lowestServo = hardwareMap.get(CRServo.class, "lowestServo"); //Could probably assign everything to lowestServo for synchronized control
+        middleServo = hardwareMap.get(CRServo.class, "middleServo");
+        highestServo = hardwareMap.get(CRServo.class, "highestServo");
+        groundServo = hardwareMap.get(CRServo.class, "groundServo");
+// Wait for the game to start (driver presses PLAY)
+        waitForStart();
+//------------------------------------------------------------------- Start of Match ---------------------------------------------------
+        runtime.reset();
+        
+        // Setup a variable for each drive wheel
+        double frontlPower = 0;
+        double frontrPower = 0;
+        double bottomlPower = 0;
+        double bottomrPower = 0;
+        double elevatorPower = .25;
+        double triggerPowerAdjust = 1;                    
+                    
+
+
+
+
+        int elevatorLevel = 0;
+        int blockHeight = 1100;
+        final int optTravHeight = 600;
+        int thrwAwayVar = 0;
+        final int  optPickHeight = 671;
+        boolean xPressed = false;
+        boolean yPressed = false;
+
+
+
+
+
+
+
+
+        while (opModeIsActive()) {  //While Teleop is in session
+
+
+ 
+
+
+
+
+            
+//          ************************************************ GAMEPAD 2 CONTROLS ************************************************
+          
+
+
+            
+            
+            if (gamepad2.a == true) {    //While A is pressed
+            
+                lowestServo.setPower(1);    //Set all servos to 100% power
+                middleServo.setPower(1);
+                highestServo.setPower(1);
+                groundServo.setPower(1); 
+                
+            }
+            else {
+                lowestServo.setPower(0);    //If the while condition (#142) is ever false, all power becomes 0 by default
+                middleServo.setPower(0);
+                highestServo.setPower(0);
+                groundServo.setPower(0);
+            }
+            if (gamepad2.b == true) {
+                shooter.setPower(100);
+                
+            }
+                shooter.setPower(0);
+
+
+            
+          
+    
+    
+    //3 touch// 440 =  optimum pickup// 200 = bottom// 400 = optimum travel height/ 1880 drop height// 2958 drop height l
+
+
+            
+
+
+              
+              
+            if (gamepad1.right_trigger > 0 ) {
+                triggerPowerAdjust = .4;
+            }
+            else {
+                triggerPowerAdjust = 1;
+            }
+            
+            //See the Desmos for an explanation, this is code that's basically modified from what they (FTC) gave us 
+            double r = Math.hypot(-gamepad1.left_stick_x, gamepad1.left_stick_y);
+            double robotAngle = Math.atan2(gamepad1.left_stick_y, -gamepad1.left_stick_x) - Math.PI / 4;
+            double rightX = -gamepad1.right_stick_x * 0.5;
+            double v1 = r * Math.cos(robotAngle) + rightX;
+            double v2 = r * Math.sin(robotAngle) - rightX;
+            double v3 = r * Math.sin(robotAngle) + rightX;
+            double v4 = r * Math.cos(robotAngle) - rightX;
+            
+            v1 = v1*MOTOR_ADJUST*triggerPowerAdjust;
+            v2 = v2*MOTOR_ADJUST*triggerPowerAdjust;
+            v3 = v3*MOTOR_ADJUST*triggerPowerAdjust;
+            v4 = v4*MOTOR_ADJUST*triggerPowerAdjust;
+            frontl.setPower(v1);
+            frontr.setPower(v2);
+            bottoml.setPower(v3);
+            bottomr.setPower(v4);
+            telemetry.addData("Motor Power", "v1 (%.2f), v2 (%.2f) v3 (%.2f) v4 (%.2f)", v1,v2,v3,v4);
+            telemetry.addData("R","%.2f",r);
+
+
+         
+
+
+//          ************************************************ GAMEPAD 2 CONTROLS ************************************************
+     //Arm motor power put into useable code by the driver
+            double power = 0;
+       
+            //Telemetry
+            telemetry.addData("Version", "(%f)", 1.0);
+            
+            telemetry.addData("ButtonY", gamepad2.x);
+            telemetry.addData("ButtonX", gamepad2.y);
+            telemetry.addData("left trigger", "(%.2f)", gamepad2.left_trigger);
+            
+            telemetry.addData("G1 Left Joystick", "X (%.2f), Y (%.2f)", (gamepad1.left_stick_y), (gamepad1.left_stick_x));
+            telemetry.addData("G2 Left Joystick", "X (%.2f), Y (%.2f)", (gamepad2.left_stick_y), (gamepad2.left_stick_x));
+            telemetry.addData("G1 Right Joystick", "X (%.2f), Y (%.2f)", (gamepad1.right_stick_y), (gamepad1.right_stick_x));
+            telemetry.addData("G2 Right Joystick", "X (%.2f), Y (%.2f)", (gamepad2.right_stick_y), (gamepad2.right_stick_x));
+
+
+            telemetry.update();
+            
+        }//While opMode
+    }//void runOpMode
+}//class Holoworld
+
+
+
+
+
+
+
+
+
+
+
